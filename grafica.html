@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Gráfica Google Charts</title>
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+  <script type="text/javascript">
+    google.charts.load('current', {'packages':['corechart']});
+    google.charts.setOnLoadCallback(drawChart);
+
+    function drawChart() {
+      // Obtener datos desde la URL (parámetro "data")
+      const urlParams = new URLSearchParams(window.location.search);
+      const dataParam = urlParams.get('data');
+      if (!dataParam) {
+        document.getElementById('chart_div').innerText = "No hay datos para graficar";
+        return;
+      }
+
+      const parsedData = JSON.parse(decodeURIComponent(dataParam));
+      // parsedData debe tener {labels: [...], values: [...]}
+
+      // Construir tabla de datos para Google Charts
+      var data = new google.visualization.DataTable();
+      data.addColumn('string', 'Etiqueta');
+      data.addColumn('number', 'Valor');
+
+      for(let i=0; i<parsedData.labels.length; i++){
+        data.addRow([parsedData.labels[i], parsedData.values[i]]);
+      }
+
+      var options = {
+        title: 'Gráfica de Memento',
+        legend: { position: 'none' }
+      };
+
+      var chart = new google.visualization.ColumnChart(document.getElementById('chart_div'));
+      chart.draw(data, options);
+    }
+  </script>
+</head>
+<body>
+  <div id="chart_div" style="width: 600px; height: 400px;"></div>
+</body>
+</html>
