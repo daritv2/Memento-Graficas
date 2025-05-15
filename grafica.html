@@ -1,99 +1,70 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Gráfica Google Charts - Memento</title>
-  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-  <style>
-    /* Hacer el gráfico responsivo */
-    #chart_div {
-      width: 90%;
-      height: 80vh;
-      margin: 0 auto;
-      min-width: 300px;
-      min-height: 400px;
-    }
-    .loading {
-      text-align: center;
-      padding: 20px;
-      font-style: italic;
-      color: #666;
-    }
-  </style>
+    <title>Gráfica Chart.js - Memento</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        #chartContainer {
+            position: relative;
+            height: 60vh;
+            width: 100%;
+        }
+        .error {
+            color: #dc3545;
+            padding: 20px;
+            border: 1px solid #f5c6cb;
+            background-color: #f8d7da;
+            border-radius: 5px;
+        }
+    </style>
 </head>
 <body>
-  <div id="chart_div" class="loading">Cargando datos...</div>
-
-  <script type="text/javascript">
-    // Configuración segura de versión
-    google.charts.load('49', {
-      packages: ['corechart'],
-      callback: initialize
-    });
-
-    function initialize() {
-      try {
-        const urlParams = new URLSearchParams(window.location.search);
-        const dataParam = urlParams.get('data');
-        
-        if (!dataParam) throw new Error('Parámetro "data" no encontrado');
-        
-        const decodedData = decodeURIComponent(dataParam);
-        const parsedData = JSON.parse(decodedData);
-        
-        // Validación de datos
-        if (!parsedData.labels || !parsedData.values) {
-          throw new Error('Formato de datos inválido');
-        }
-        
-        if (parsedData.labels.length !== parsedData.values.length) {
-          throw new Error('Labels y Values tienen diferente longitud');
-        }
-
-        drawChart(parsedData);
-        
-        // Manejar redimensionamiento
-        window.addEventListener('resize', () => drawChart(parsedData));
-        
-      } catch (error) {
-        handleError(error);
-      }
-    }
-
-    function drawChart(data) {
-      const dataTable = new google.visualization.DataTable();
-      dataTable.addColumn('string', 'Etiqueta');
-      dataTable.addColumn('number', 'Valor');
-
-      data.labels.forEach((label, index) => {
-        const value = Number(data.values[index]);
-        if (isNaN(value)) throw new Error(`Valor inválido en índice ${index}`);
-        dataTable.addRow([label, value]);
-      });
-
-      const options = {
-        title: data.title || 'Gráfica de Memento',
-        legend: { position: 'none' },
-        animation: { duration: 1000, easing: 'out' },
-        chartArea: { width: '85%', height: '75%' }
-      };
-
-      const chartType = new URLSearchParams(window.location.search).get('chartType') || 'ColumnChart';
-      const chart = new google.visualization[chartType](document.getElementById('chart_div'));
-      
-      chart.draw(dataTable, options);
-    }
-
-    function handleError(error) {
-      console.error(error);
-      const container = document.getElementById('chart_div');
-      container.classList.remove('loading');
-      container.innerHTML = `
-        <div style="color: #cc0000; padding: 20px; text-align: center;">
-          Error: ${error.message}<br>
-          <small>Verifica la estructura de los datos</small>
+    <div class="container">
+        <div id="chartContainer">
+            <canvas id="myChart"></canvas>
         </div>
-      `;
-    }
-  </script>
+        <div id="errorMessage"></div>
+    </div>
+
+    <script>
+        // Obtener configuración desde parámetro URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const encodedConfig = urlParams.get('config');
+
+        try {
+            if (!encodedConfig) throw new Error('Parámetro "config" no encontrado en la URL');
+            
+            const chartConfig = JSON.parse(decodeURIComponent(encodedConfig));
+            
+            // Crear contexto del canvas
+            const ctx = document.getElementById('myChart').getContext('2d');
+            
+            // Configuración extendida con opciones responsive
+            const fullConfig = {
+                ...chartConfig,
+                options: {
+                    ...chartConfig.options,
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            };
+            
+            new Chart(ctx, fullConfig);
+
+        } catch (error) {
+            document.getElementById('errorMessage').innerHTML = `
+                <div class="error">
+                    <strong>Error:</strong> ${error.message}<br>
+                    <small>Verifica la estructura de la configuración</small>
+                </div>
+            `;
+            console.error(error);
+        }
+    </script>
 </body>
 </html>
