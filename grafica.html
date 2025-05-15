@@ -1,44 +1,99 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Gráfica Google Charts</title>
+  <title>Gráfica Google Charts - Memento</title>
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-  <script type="text/javascript">
-    google.charts.load('current', {'packages':['corechart']});
-    google.charts.setOnLoadCallback(drawChart);
-
-    function drawChart() {
-      // Obtener datos desde la URL (parámetro "data")
-      const urlParams = new URLSearchParams(window.location.search);
-      const dataParam = urlParams.get('data');
-      if (!dataParam) {
-        document.getElementById('chart_div').innerText = "No hay datos para graficar";
-        return;
-      }
-
-      const parsedData = JSON.parse(decodeURIComponent(dataParam));
-      // parsedData debe tener {labels: [...], values: [...]}
-
-      // Construir tabla de datos para Google Charts
-      var data = new google.visualization.DataTable();
-      data.addColumn('string', 'Etiqueta');
-      data.addColumn('number', 'Valor');
-
-      for(let i=0; i<parsedData.labels.length; i++){
-        data.addRow([parsedData.labels[i], parsedData.values[i]]);
-      }
-
-      var options = {
-        title: 'Gráfica de Memento',
-        legend: { position: 'none' }
-      };
-
-      var chart = new google.visualization.ColumnChart(document.getElementById('chart_div'));
-      chart.draw(data, options);
+  <style>
+    /* Hacer el gráfico responsivo */
+    #chart_div {
+      width: 90%;
+      height: 80vh;
+      margin: 0 auto;
+      min-width: 300px;
+      min-height: 400px;
     }
-  </script>
+    .loading {
+      text-align: center;
+      padding: 20px;
+      font-style: italic;
+      color: #666;
+    }
+  </style>
 </head>
 <body>
-  <div id="chart_div" style="width: 450px; height: 400px;"></div>
+  <div id="chart_div" class="loading">Cargando datos...</div>
+
+  <script type="text/javascript">
+    // Configuración segura de versión
+    google.charts.load('49', {
+      packages: ['corechart'],
+      callback: initialize
+    });
+
+    function initialize() {
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const dataParam = urlParams.get('data');
+        
+        if (!dataParam) throw new Error('Parámetro "data" no encontrado');
+        
+        const decodedData = decodeURIComponent(dataParam);
+        const parsedData = JSON.parse(decodedData);
+        
+        // Validación de datos
+        if (!parsedData.labels || !parsedData.values) {
+          throw new Error('Formato de datos inválido');
+        }
+        
+        if (parsedData.labels.length !== parsedData.values.length) {
+          throw new Error('Labels y Values tienen diferente longitud');
+        }
+
+        drawChart(parsedData);
+        
+        // Manejar redimensionamiento
+        window.addEventListener('resize', () => drawChart(parsedData));
+        
+      } catch (error) {
+        handleError(error);
+      }
+    }
+
+    function drawChart(data) {
+      const dataTable = new google.visualization.DataTable();
+      dataTable.addColumn('string', 'Etiqueta');
+      dataTable.addColumn('number', 'Valor');
+
+      data.labels.forEach((label, index) => {
+        const value = Number(data.values[index]);
+        if (isNaN(value)) throw new Error(`Valor inválido en índice ${index}`);
+        dataTable.addRow([label, value]);
+      });
+
+      const options = {
+        title: data.title || 'Gráfica de Memento',
+        legend: { position: 'none' },
+        animation: { duration: 1000, easing: 'out' },
+        chartArea: { width: '85%', height: '75%' }
+      };
+
+      const chartType = new URLSearchParams(window.location.search).get('chartType') || 'ColumnChart';
+      const chart = new google.visualization[chartType](document.getElementById('chart_div'));
+      
+      chart.draw(dataTable, options);
+    }
+
+    function handleError(error) {
+      console.error(error);
+      const container = document.getElementById('chart_div');
+      container.classList.remove('loading');
+      container.innerHTML = `
+        <div style="color: #cc0000; padding: 20px; text-align: center;">
+          Error: ${error.message}<br>
+          <small>Verifica la estructura de los datos</small>
+        </div>
+      `;
+    }
+  </script>
 </body>
 </html>
