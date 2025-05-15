@@ -1,0 +1,24 @@
+{
+  "type": "bar",
+  "data": {
+    "labels": ["Enero", "Febrero", "Marzo"],
+    "datasets": [
+      {
+        "label": "PNL",
+        "data": [10, 20, 30],
+        "backgroundColor": "rgba(54, 162, 235, 0.6)",
+        "borderColor": "rgba(54, 162, 235, 1)",
+        "borderWidth": 1
+      }
+    ]
+  },
+  "options": {
+    "responsive": true,
+    "plugins": {
+      "title": {
+        "display": true,
+        "text": "Resultados Mensuales"
+      }
+    }
+  }
+}
