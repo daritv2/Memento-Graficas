@@ -1,70 +1,76 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Gráfica Chart.js - Memento</title>
+    <title>Gráfica Automática - Memento</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         .container {
             max-width: 800px;
-            margin: 20px auto;
-            padding: 20px;
+            margin: 2rem auto;
+            padding: 1rem;
         }
-        #chartContainer {
-            position: relative;
-            height: 60vh;
-            width: 100%;
+        #loading {
+            text-align: center;
+            padding: 2rem;
+            font-style: italic;
+            color: #666;
         }
         .error {
             color: #dc3545;
-            padding: 20px;
+            padding: 1rem;
             border: 1px solid #f5c6cb;
             background-color: #f8d7da;
-            border-radius: 5px;
+            border-radius: 4px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div id="chartContainer">
-            <canvas id="myChart"></canvas>
-        </div>
-        <div id="errorMessage"></div>
+        <div id="loading">Cargando configuración...</div>
+        <canvas id="myChart"></canvas>
+        <div id="error"></div>
     </div>
 
     <script>
-        // Obtener configuración desde parámetro URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const encodedConfig = urlParams.get('config');
+        // Cargar configuración desde GitHub
+        async function loadConfig() {
+            try {
+                const response = await fetch('https://raw.githubusercontent.com/daritv2/Memento-Graficas/main/config.json');
+                
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                
+                const config = await response.json();
+                initChart(config);
+                
+            } catch (error) {
+                showError(`Error cargando configuración: ${error.message}`);
+            }
+        }
 
-        try {
-            if (!encodedConfig) throw new Error('Parámetro "config" no encontrado en la URL');
+        function initChart(config) {
+            document.getElementById('loading').remove();
             
-            const chartConfig = JSON.parse(decodeURIComponent(encodedConfig));
-            
-            // Crear contexto del canvas
             const ctx = document.getElementById('myChart').getContext('2d');
-            
-            // Configuración extendida con opciones responsive
-            const fullConfig = {
-                ...chartConfig,
+            new Chart(ctx, {
+                ...config,
                 options: {
-                    ...chartConfig.options,
-                    responsive: true,
+                    ...config.options,
                     maintainAspectRatio: false
                 }
-            };
-            
-            new Chart(ctx, fullConfig);
+            });
+        }
 
-        } catch (error) {
-            document.getElementById('errorMessage').innerHTML = `
+        function showError(message) {
+            document.getElementById('loading').remove();
+            document.getElementById('error').innerHTML = `
                 <div class="error">
-                    <strong>Error:</strong> ${error.message}<br>
-                    <small>Verifica la estructura de la configuración</small>
+                    <strong>Error:</strong> ${message}
                 </div>
             `;
-            console.error(error);
         }
+
+        // Iniciar carga al abrir la página
+        loadConfig();
     </script>
 </body>
 </html>
